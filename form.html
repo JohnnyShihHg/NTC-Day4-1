@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="https://unpkg.com/vue@3"></script>
+    <div id="app">
+        <!--currentForm(變數) 影響要顯示的component-->
+        <!--抓到內部丟上來的資料再把資料丟回去-->
+        <component :is="currentForm" @set-form="updateForm" @update="updateInfo" :form-data="form"></component>
+        <!--改成動態的component-->
+
+
+        <!-- <personal-component></personal-component>
+        <br>
+        <address-component></address-component>
+        <br>
+        <final-component></final-component> -->
+
+        <script>
+            const app = Vue.createApp({
+                data() {
+                    return {
+                        currentForm: 'personal-component',
+                        form: {}
+                    }
+                },
+                methods: {
+                    updateForm(formName) {
+                    // console.log(formName)
+                    this.currentForm = formName;
+                },
+                updateInfo(inputData) {
+                    console.log(inputData)
+                    this.form[inputData.columnName] = inputData.columnValue;
+                    // this.form['name'] = value; 這樣會抓不到
+                    // console.log(this.form)
+                }
+            }
+        });
+        app.component('personal-component', {//先建立樣板
+            template: `
+        <label>Name</label>
+        <input type="text"  v-model="name">    <br>
+        <label>Phone</label>
+        <input type="text" v-model="phone">    <br>
+        <button @click="nextStep">next step</button>    
+         `, data() {
+                return {
+                    name: '',
+                    phone: '',
+                }//資料name
+            },
+            methods: {
+                nextStep() {
+                    this.$emit('set-form' /*向外連線的位子 */, 'address-component'/*前往的位址*/);
+                }
+
+            },
+            /*監聽我要的值變動後將資料丟到外部*/
+            watch: {
+                name: {
+                    handler(value) {
+                        this.$emit('update', { columnName: 'name', columnValue: value })
+                        // this.$emit('update', value)
+                    }
+                },
+                phone: {
+                    handler(value) {//將資料丟到update 
+                        this.$emit('update', { columnName: 'phone', columnValue: value })
+                        // this.$emit('update', value)
+                    }
+                }
+            }
+        })
+        app.component('address-component', {
+            template: `
+        <label>address</label>
+        <input type="text" v-model="address">    <br>
+        <button @click="previousStep">previous step</button>    
+        <button @click="nextStep">next step</button>    
+         `, data() {
+                return {
+                    address: ''
+                }
+            },
+            methods: {
+                previousStep() {
+                    this.$emit('set-form' /*向外連線的位子相同 */, 'personal-component'/*前往的位址*/);
+                },
+                nextStep() {
+                    this.$emit('set-form' /*向外連線的位子相同 */, 'final-component'/*前往的位址*/);
+                }
+
+            },
+            watch: {
+                address: {
+                    handler(value) {
+                        this.$emit('update', { columnName: 'address', columnValue: value })
+                    }
+                }
+            }
+        })
+        /*丟物件進去*/
+        // {
+        //   name: 'John',
+        //   phone: '0988',
+        //   address: 'Taipei'
+        // } 資料結構
+        app.component('final-component', {
+            template: `
+     <h3>Your Data:</h3>
+     <div>{{ formData['name'] }}</div>
+     <div>{{ formData['phone'] }}</div>
+     <div>{{ formData['address'] }}</div>
+     <button @click="previousStep">上一步</button>
+  `,
+            props: ['formData'],
+            methods: {
+                previousStep() {
+                    this.$emit('set-form' /*向外連線的位子相同 */, 'address-component'/*前往的位址*/);
+                }
+
+            }
+        });
+
+
+        app.mount('#app')
+
+    </script>
+</body>
+
+</html>
